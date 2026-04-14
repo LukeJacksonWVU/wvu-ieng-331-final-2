@@ -66,3 +66,23 @@ def check_tables_exist(db_path: str | Path) -> bool:
     Returns:
         ``True`` if all tables exist, ``False`` otherwise.
     """
+    con = _connect(db_path)
+    try:
+        rows = con.execute(
+            "SELECT table_name FROM information_schema.tables "
+            "WHERE table_schema = 'main'"
+        ).fetchall()
+        found = {r[0] for r in rows}
+        missing = EXPECTED_TABLES - found
+        if missing:
+            logger.warning(
+                "Missing tables: {}. Expected {} but found {}.",
+                sorted(missing),
+                len(EXPECTED_TABLES),
+                len(found),
+            )
+            return False
+        logger.info("Table existence check passed ({} tables found).", len(found))
+        return True
+    finally:
+        con.close()
