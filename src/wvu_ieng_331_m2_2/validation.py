@@ -129,3 +129,83 @@ def check_key_columns_not_null(db_path: str | Path) -> bool:
     finally:
         con.close()
     return all_ok
+
+
+def check_date_range(db_path: str | Path) -> bool:
+    """Verify that order purchase timestamps are within a reasonable window.
+
+    Checks that the date range is non-empty, that the earliest order is not
+    suspiciously old (before 2016-01-01), and that no orders are future-dated.
+    Future-dated orders log a WARNING but the check still returns True so the
+    pipeline can continue – the holdout dataset legitimately extends beyond today.
+
+    Args:
+        db_path: Path to the DuckDB database file.
+
+    Returns:
+        ``True`` if the date range is non-empty and the minimum date is
+        plausible, ``False`` otherwise.
+    """
+    con = _connect(db_path)
+    try:
+        row = con.execute(
+            "SELECT MIN(order_purchase_timestamp), MAX(order_purchase_timestamp) "
+            "FROM orders"
+        ).fetchone()
+        if row is None or row[0] is None:
+            logger.warning("orders table has no rows – date range check skipped.")
+            return False
+
+        min_ts, max_ts = row
+
+        def _to_date(val: object) -> date:
+            """Normalise a DuckDB timestamp return value to ``datetime.date``.
+
+            Args:
+                val: A ``datetime``, ``date``, or ISO-format ``str`` as returned
+                    by DuckDB depending on driver version.
+
+            Returns:
+                The corresponding ``datetime.date`` object.
+
+            Raises:
+                TypeError: If ``val`` is not a recognised type.
+            """
+            if isinstance(val, datetime):
+                return val.date()
+            if isinstance(val, date):
+                return val
+            if isinstance(val, str):
+                return datetime.fromisoformat(val).date()
+            raise TypeError(f"Cannot convert {type(val)} to date")
+
+        min_date = _to_date(min_ts)
+        max_date = _to_date(max_ts)
+        today = date.today()
+
+        if min_date < DATE_RANGE_EARLIEST:
+            logger.warning(
+                "Earliest order date {} is before expected threshold {} – "
+                "data may be corrupted or from a different dataset.",
+                min_date,
+                DATE_RANGE_EARLIEST,
+            )
+            return False
+
+        if max_date > today:
+            logger.warning(
+                "Latest order date {} is beyond today ({}) – "
+                "dataset contains future-dated records (extended holdout data).",
+                max_date,
+                today,
+            )
+
+        logger.info(
+            "Date range check passed: {} – {} ({} calendar days).",
+            min_date,
+            max_date,
+            (max_date - min_date).days,
+        )
+        return True
+    finally:
+        con.close()
