@@ -55,3 +55,13 @@ def _connect(db_path: str | Path) -> duckdb.DuckDBPyConnection:
     if not db_path.exists():
         raise FileNotFoundError(f"Database not found: {db_path}")
     return duckdb.connect(str(db_path), read_only=True)
+
+    def check_tables_exist(db_path: str | Path) -> bool:
+        """Verify that all 9 expected tables are present in the database.
+
+        Args:
+            db_path: Path to the DuckDB database file.
+
+        Returns:
+            ``True`` if all tables exist, ``False`` otherwise.
+        """
