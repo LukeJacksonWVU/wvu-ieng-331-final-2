@@ -86,3 +86,46 @@ def check_tables_exist(db_path: str | Path) -> bool:
         return True
     finally:
         con.close()
+
+
+def check_key_columns_not_null(db_path: str | Path) -> bool:
+    """Verify that key ID columns are not entirely NULL.
+
+    Checks order_id, customer_id, product_id, and seller_id across the
+    tables where they are meaningful primary or foreign keys.
+
+    Args:
+        db_path: Path to the DuckDB database file.
+
+    Returns:
+        ``True`` if no key column is entirely NULL, ``False`` otherwise.
+    """
+    con = _connect(db_path)
+    all_ok = True
+    try:
+        for table, columns in KEY_COLUMNS.items():
+            for col in columns:
+                try:
+                    (count,) = con.execute(
+                        f"SELECT COUNT(*) FROM {table} WHERE {col} IS NOT NULL"
+                    ).fetchone()  # type: ignore[misc]
+                    if count == 0:
+                        logger.warning(
+                            "Column '{}.{}' is entirely NULL – no usable keys.",
+                            table,
+                            col,
+                        )
+                        all_ok = False
+                    else:
+                        logger.info(
+                            "Key column '{}.{}' has {} non-null values.",
+                            table,
+                            col,
+                            count,
+                        )
+                except duckdb.Error as exc:
+                    logger.warning("Could not check '{}.{}': {}", table, col, exc)
+                    all_ok = False
+    finally:
+        con.close()
+    return all_ok
