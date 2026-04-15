@@ -249,3 +249,45 @@ def check_row_counts(db_path: str | Path) -> bool:
     finally:
         con.close()
     return all_ok
+
+
+def run_all(db_path: str | Path, halt_on_failure: bool = False) -> bool:
+    """Execute all validation checks in sequence.
+
+    Args:
+        db_path: Path to the DuckDB database file.
+        halt_on_failure: If ``True``, raise a ``RuntimeError`` when any check
+            fails.  If ``False`` (default), log warnings and continue.
+
+    Returns:
+        ``True`` if every check passed, ``False`` if any check failed.
+
+    Raises:
+        RuntimeError: Only when ``halt_on_failure=True`` and a check fails.
+        FileNotFoundError: If the database file does not exist.
+    """
+    logger.info("===== Starting data validation =====")
+    results = {
+        "tables_exist": check_tables_exist(db_path),
+        "key_columns_not_null": check_key_columns_not_null(db_path),
+        "date_range": check_date_range(db_path),
+        "row_counts": check_row_counts(db_path),
+    }
+    passed = all(results.values())
+    failed = [name for name, ok in results.items() if not ok]
+
+    if passed:
+        logger.info("===== All validation checks passed =====")
+    else:
+        logger.warning(
+            "===== Validation completed with {} failure(s): {} =====",
+            len(failed),
+            failed,
+        )
+        if halt_on_failure:
+            raise RuntimeError(
+                f"Validation failed on: {failed}. "
+                "Fix the database or re-run with --no-halt-on-validation-failure."
+            )
+
+    return passed
