@@ -209,3 +209,43 @@ def check_date_range(db_path: str | Path) -> bool:
         return True
     finally:
         con.close()
+
+
+def check_row_counts(db_path: str | Path) -> bool:
+    """Verify that table has more rows than minimum row-count thresholds.
+
+    Thresholds are defined in ``MIN_ROW_COUNTS`` (1,000 rows each for
+    orders, order_items, and customers).  A threshold of 1,000 was chosen
+    because the Olist dataset contains ~100 k orders, anything below 1,000
+    suggests messed up data.
+
+    Args:
+        db_path: Path to the DuckDB database file.
+
+    Returns:
+        ``True`` if all tables exceed their threshold, ``False`` otherwise.
+    """
+    con = _connect(db_path)
+    all_ok = True
+    try:
+        for table, minimum in MIN_ROW_COUNTS.items():
+            try:
+                (count,) = con.execute(f"SELECT COUNT(*) FROM {table}").fetchone()  # type: ignore[misc]
+                if count < minimum:
+                    logger.warning(
+                        "Table '{}' has {} rows, below minimum threshold of {}.",
+                        table,
+                        count,
+                        minimum,
+                    )
+                    all_ok = False
+                else:
+                    logger.info(
+                        "Row count check passed for '{}': {} rows.", table, count
+                    )
+            except duckdb.Error as exc:
+                logger.warning("Could not count rows in '{}': {}", table, exc)
+                all_ok = False
+    finally:
+        con.close()
+    return all_ok
