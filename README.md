@@ -24,23 +24,23 @@ uv run wvu-ieng-331-m2-2 --start-date 2026-01-01 --seller-state SP
 | `--end-date` | date | None (no filter) | Inclusive upper bound for date of purchase from order_purchase_timestamp |
 |`--db-path` | path | data/olist.duckdb | Path to DuckDB database file |
 | `--seller-state` | string | none (no filter) | Two letter state abbreviation |
-| --halt-on-validation-failure | flag | false | If set, pipeline stops on validation failure instead of continuing |
+| --halt-on-validation-failure` | flag | false | If set, pipeline stops on validation failure instead of continuing |
 
 ## Outputs
 
-All outputs are written to the output/ directory. List of specific outputs below
+All outputs are written to the `output/` directory. List of specific outputs below
 
-- summary.csv -
+- `summary.csv` -
 This is a .csv file containing: seller count per state, total revenue per state, average composite score for sellers, average on-time delivery rate, average review score, global ABC product tier counts (A/B/C), and the most recent cohort retention rate (30-day).
 
 This file should be used to evaluate and compare seller performance across states
 
-- detail.parquet -
+- `detail.parquet` -
 This is a .parquet file containing: product revenue, revenue percentage contribution, cumulative percentage, and the product's ABC classification (A/B/C tiers)
 
 This file should be used to evaluate product performance on the market and the value of a product to sellers
 
-- chart.html -
+- `chart.html` -
 This is a .html, made using Vega-Altair, file containing: total revenue, with seller state on the x-axis and average composite score on the y-axis.
 
 This file should be used as a visual reference of seller across states
