@@ -57,8 +57,18 @@ Prior to analysis, the pipeline performs the following validation checks:
 
 ## Analysis Summary
 
-Brief narrative of your analytical findings (carried forward from M1, updated if needed).
+Broadly, the pipeline analyzes seller and product performance from olist e-commerce data
+
+Composite scorecards are made by combining revenue, on-time delivery performance, and customer reviews. 
+Pareto analysis is done on products to classify products into three tiers: A,B, and C. A is the top 80% of revenue, B is the middle 15%, and C is the bottom 5%. 
+Customers are grouped into cohorts by first purchase month, their repeat behavior is tracked, and their cohort's 30 day retnetion rate (whether they re-order in 30 days) is calculated.
+Delivery times are evaluated to compare estimated delivery with real delivery across states (state to state shipping are called "corridors"). This lets us see which corriodors are under or over performing.
+
 
 ## Limitations & Caveats
 
-What the pipeline does not handle, known edge cases, etc.
+chart.html requires internet access to load
+The pipeline does not handle invald dates (i.e. end date before start date)
+All outputs go to the `outputs/` directory, which can get confusing if multiple runs are conducted.
+Any changes to DuckDB schema may cause errors in the pipeline. The pipeline is hardcoded so to speak
+Large files are not optimized and performance issues will arise as files get larger
