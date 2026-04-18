@@ -24,7 +24,7 @@ uv run wvu-ieng-331-m2-2 --start-date 2026-01-01 --seller-state SP
 | `--end-date` | date | None (no filter) | Inclusive upper bound for date of purchase from order_purchase_timestamp |
 |`--db-path` | path | data/olist.duckdb | Path to DuckDB database file |
 | `--seller-state` | string | none (no filter) | Two letter state abbreviation |
-| --halt-on-validation-failure` | flag | false | If set, pipeline stops on validation failure instead of continuing |
+| `--halt-on-validation-failure` | flag | false | If set, pipeline stops on validation failure instead of continuing |
 
 ## Outputs
 
