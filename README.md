@@ -28,7 +28,7 @@ uv run wvu-ieng-331-m2-2 --start-date 2026-01-01 --seller-state SP
 
 ## Outputs
 
-All outputs are written to the `output/` directory. List of specific outputs below
+All outputs are written to the `output/` directory and created at runtime. List of specific outputs below
 
 - `summary.csv` -
 This is a .csv file containing: seller count per state, total revenue per state, average composite score for sellers, average on-time delivery rate, average review score, global ABC product tier counts (A/B/C), and the most recent cohort retention rate (30-day).
