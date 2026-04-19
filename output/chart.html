@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Seller Composite Score by State</title>
+  <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+  <style>body { font-family: sans-serif; padding: 2rem; }</style>
+</head>
+<body>
+  <div id="chart"></div>
+  <script>
+    vegaEmbed("#chart", {
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
+  "config": {
+    "view": {
+      "continuousHeight": 300,
+      "continuousWidth": 300
+    }
+  },
+  "data": {
+    "name": "data-54694b64910198f92ca6cd74a94e0e90"
+  },
+  "datasets": {
+    "data-54694b64910198f92ca6cd74a94e0e90": [
+      {
+        "avg_composite_score": 0.4246,
+        "seller_count": 1,
+        "seller_state": "MA",
+        "total_revenue": 48550.24
+      },
+      {
+        "avg_composite_score": 0.3967,
+        "seller_count": 1,
+        "seller_state": "PA",
+        "total_revenue": 1393.11
+      },
+      {
+        "avg_composite_score": 0.39655999999999997,
+        "seller_count": 5,
+        "seller_state": "RN",
+        "total_revenue": 11296.71
+      },
+      {
+        "avg_composite_score": 0.38924444444444445,
+        "seller_count": 9,
+        "seller_state": "PE",
+        "total_revenue": 103822.26000000001
+      },
+      {
+        "avg_composite_score": 0.38785,
+        "seller_count": 4,
+        "seller_state": "MT",
+        "total_revenue": 21702.449999999997
+      },
+      {
+        "avg_composite_score": 0.3875333333333333,
+        "seller_count": 6,
+        "seller_state": "PB",
+        "total_revenue": 18584.15
+      },
+      {
+        "avg_composite_score": 0.38634,
+        "seller_count": 5,
+        "seller_state": "MS",
+        "total_revenue": 9750.65
+      },
+      {
+        "avg_composite_score": 0.38622173913043484,
+        "seller_count": 23,
+        "seller_state": "ES",
+        "total_revenue": 59776.67
+      },
+      {
+        "avg_composite_score": 0.38496315789473684,
+        "seller_count": 19,
+        "seller_state": "BA",
+        "total_revenue": 304990.16000000003
+      },
+      {
+        "avg_composite_score": 0.380415,
+        "seller_count": 40,
+        "seller_state": "GO",
+        "total_revenue": 78752.68000000001
+      },
+      {
+        "avg_composite_score": 0.37943789473684225,
+        "seller_count": 190,
+        "seller_state": "SC",
+        "total_revenue": 729704.76
+      },
+      {
+        "avg_composite_score": 0.37795983606557365,
+        "seller_count": 244,
+        "seller_state": "MG",
+        "total_revenue": 1213270.2400000005
+      },
+      {
+        "avg_composite_score": 0.3777496124031004,
+        "seller_count": 129,
+        "seller_state": "RS",
+        "total_revenue": 434875.66000000003
+      },
+      {
+        "avg_composite_score": 0.3776,
+        "seller_count": 1,
+        "seller_state": "PI",
+        "total_revenue": 2965.32
+      },
+      {
+        "avg_composite_score": 0.37649666666666665,
+        "seller_count": 30,
+        "seller_state": "DF",
+        "total_revenue": 115515.58
+      },
+      {
+        "avg_composite_score": 0.3760349570200573,
+        "seller_count": 349,
+        "seller_state": "PR",
+        "total_revenue": 1453098.5499999996
+      },
+      {
+        "avg_composite_score": 0.37404240129799965,
+        "seller_count": 1849,
+        "seller_state": "SP",
+        "total_revenue": 10163091.36999998
+      },
+      {
+        "avg_composite_score": 0.37383859649122797,
+        "seller_count": 171,
+        "seller_state": "RJ",
+        "total_revenue": 930917.9199999999
+      },
+      {
+        "avg_composite_score": 0.36615,
+        "seller_count": 2,
+        "seller_state": "SE",
+        "total_revenue": 1924.69
+      },
+      {
+        "avg_composite_score": 0.36605,
+        "seller_count": 2,
+        "seller_state": "RO",
+        "total_revenue": 5474.98
+      },
+      {
+        "avg_composite_score": 0.3395846153846154,
+        "seller_count": 13,
+        "seller_state": "CE",
+        "total_revenue": 24510.240000000005
+      },
+      {
+        "avg_composite_score": 0.2813,
+        "seller_count": 1,
+        "seller_state": "AM",
+        "total_revenue": 1258.8
+      },
+      {
+        "avg_composite_score": 0.2004,
+        "seller_count": 1,
+        "seller_state": "AC",
+        "total_revenue": 299.84
+      }
+    ]
+  },
+  "encoding": {
+    "color": {
+      "field": "total_revenue",
+      "legend": {
+        "title": "Total Revenue (BRL)"
+      },
+      "scale": {
+        "scheme": "blues"
+      },
+      "type": "quantitative"
+    },
+    "tooltip": [
+      {
+        "field": "seller_state",
+        "title": "State",
+        "type": "nominal"
+      },
+      {
+        "field": "avg_composite_score",
+        "format": ".3f",
+        "title": "Avg Score",
+        "type": "quantitative"
+      },
+      {
+        "field": "total_revenue",
+        "format": ",.0f",
+        "title": "Total Revenue",
+        "type": "quantitative"
+      },
+      {
+        "field": "seller_count",
+        "title": "# Sellers",
+        "type": "quantitative"
+      }
+    ],
+    "x": {
+      "axis": {
+        "title": "Seller State"
+      },
+      "field": "seller_state",
+      "sort": "-y",
+      "type": "nominal"
+    },
+    "y": {
+      "axis": {
+        "title": "Avg Composite Score"
+      },
+      "field": "avg_composite_score",
+      "type": "quantitative"
+    }
+  },
+  "height": 400,
+  "mark": {
+    "cornerRadiusTopLeft": 4,
+    "cornerRadiusTopRight": 4,
+    "type": "bar"
+  },
+  "title": "Average Seller Composite Score by State",
+  "width": 700
+});
+  </script>
+</body>
+</html>
