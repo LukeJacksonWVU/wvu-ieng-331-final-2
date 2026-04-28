@@ -1,2 +1,4 @@
 # Initial UV INIT
-src/wvu_ieng_331_m2_3/__init__.py
+from wvu_ieng_331_m2_2.pipeline import main
+
+__all__ = ["main"]
