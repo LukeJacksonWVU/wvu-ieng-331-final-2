@@ -19,3 +19,17 @@ _WHITE = "#FFFFFF"
 _GREY = "#F2F2F2"
 _DARK = "#1A1A2E"
 _FONT = "Arial"
+
+
+def _fmt(wb: xlsxwriter.Workbook, props: dict) -> xlsxwriter.workbook.Format:
+    base = {"font_name": _FONT, "font_size": 10}
+    base.update(props)
+    return wb.add_format(base)
+
+
+def build(scorecard_df, cohort_df, abc_df, delivery_df, output_dir):
+    path = output_dir / "report.xlsx"
+    wb = xlsxwriter.Workbook(str(path))
+    wb.close()
+    logger.info("Wrote Excel report: {}", path)
+    return path
