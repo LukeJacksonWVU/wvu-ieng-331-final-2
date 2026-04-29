@@ -78,6 +78,100 @@ def _write_cover(
     ws.set_row(3, 6)
     ws.merge_range("A4:H4", "", _fmt(wb, {"bg_color": _NAVY}))
 
+    # KPI tiles
+    # Use columns B-G with each KPI occupying one full column (no merging needed)
+    kpi_label_fmt = _fmt(
+        wb,
+        {
+            "bold": True,
+            "font_size": 9,
+            "font_color": _WHITE,
+            "bg_color": _TEAL,
+            "align": "center",
+            "valign": "vcenter",
+            "border": 1,
+            "border_color": _WHITE,
+        },
+    )
+    kpi_value_fmt = _fmt(
+        wb,
+        {
+            "bold": True,
+            "font_size": 16,
+            "font_color": _DARK,
+            "bg_color": _LIGHT,
+            "align": "center",
+            "valign": "vcenter",
+            "border": 1,
+            "border_color": _TEAL,
+        },
+    )
+    kpi_value_pct_fmt = _fmt(
+        wb,
+        {
+            "bold": True,
+            "font_size": 16,
+            "font_color": _DARK,
+            "bg_color": _LIGHT,
+            "align": "center",
+            "valign": "vcenter",
+            "border": 1,
+            "border_color": _TEAL,
+            "num_format": "0.0%",
+        },
+    )
+    kpi_value_cur_fmt = _fmt(
+        wb,
+        {
+            "bold": True,
+            "font_size": 16,
+            "font_color": _DARK,
+            "bg_color": _LIGHT,
+            "align": "center",
+            "valign": "vcenter",
+            "border": 1,
+            "border_color": _TEAL,
+            "num_format": "R#,##0",
+        },
+    )
+
+    # Compute KPIs
+    total_sellers = len(scorecard_df)
+    total_revenue = float(scorecard_df["total_revenue"].sum())
+    avg_score = float(scorecard_df["composite_score"].mean())
+    avg_review = float(scorecard_df["avg_review_score"].mean())
+    avg_ontime = float(scorecard_df["on_time_rate_pct"].mean()) / 100.0
+    latest_retention = 0.0
+    if len(cohort_df) > 0:
+        latest_retention = (
+            float(
+                cohort_df.sort("cohort_month", descending=True)
+                .head(1)["retention_rate_30d"]
+                .item()
+            )
+            / 100.0
+        )
+    abc_a = len(abc_df.filter(pl.col("abc_tier") == "A"))
+    abc_b = len(abc_df.filter(pl.col("abc_tier") == "B"))
+    abc_c = len(abc_df.filter(pl.col("abc_tier") == "C"))
+    top_corridors = delivery_df.sort("on_time_rate_pct", descending=True).head(1)
+    best_corridor = (
+        top_corridors["corridor"].item() if len(top_corridors) > 0 else "N/A"
+    )
+
+    kpis = [
+        ("Total Sellers", total_sellers, kpi_value_fmt),
+        ("Total Revenue (BRL)", total_revenue, kpi_value_cur_fmt),
+        ("Avg Composite Score", avg_score, kpi_value_fmt),
+        ("Avg Review Score", avg_review, kpi_value_fmt),
+        ("Avg On-Time Delivery", avg_ontime, kpi_value_pct_fmt),
+        ("30-Day Retention Rate", latest_retention, kpi_value_pct_fmt),
+    ]
+
+    ws.set_row(5, 10)
+    ws.set_row(6, 22)
+    ws.set_row(7, 44)
+
 
 def build(scorecard_df, cohort_df, abc_df, delivery_df, output_dir):
     path = output_dir / "report.xlsx"
