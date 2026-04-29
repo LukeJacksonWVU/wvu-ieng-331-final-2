@@ -22,7 +22,8 @@ import altair as alt
 import duckdb
 import polars as pl
 from loguru import logger
-from wvu_ieng_331_final_2 import queries, validation
+
+from wvu_ieng_331_final_2 import queries, report, validation
 
 # Default database path (relative to the project root, two levels above src/)
 _DEFAULT_DB = Path(__file__).parent.parent.parent / "data" / "olist.duckdb"
@@ -336,7 +337,7 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     # ---- 1. Validate -------------------------------------------------------
-    logger.info("Step 1/4 – Running validation…")
+    logger.info("Step 1/5 – Running validation…")
     try:
         validation.run_all(
             args.db_path,
@@ -354,7 +355,7 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     # ---- 2. Query ----------------------------------------------------------
-    logger.info("Step 2/4 – Executing queries…")
+    logger.info("Step 2/5 – Executing queries…")
     try:
         scorecard_df = queries.get_seller_scorecard(
             args.db_path,
@@ -394,7 +395,7 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     # ---- 3. Process --------------------------------------------------------
-    logger.info("Step 3/4 – Aggregating outputs…")
+    logger.info("Step 3/5 – Aggregating outputs…")
     try:
         summary_df = _build_summary(scorecard_df, abc_df, cohort_df)
         # detail.parquet = every product with ABC tier, revenue %, and cumulative %
@@ -404,7 +405,7 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     # ---- 4. Write outputs --------------------------------------------------
-    logger.info("Step 4/4 – Writing output files…")
+    logger.info("Step 4/5 – Writing output files…")
     try:
         _ensure_output_dir(_DEFAULT_OUTPUT)
         _write_summary_csv(summary_df, _DEFAULT_OUTPUT)
@@ -415,6 +416,20 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     except ValueError as exc:
         logger.error("Chart build error: {}", exc)
+        return 1
+
+    # ---- 5. Build Excel report ---------------------------------------------
+    logger.info("Step 5/5 – Building Excel report…")
+    try:
+        report.build(
+            scorecard_df=scorecard_df,
+            cohort_df=cohort_df,
+            abc_df=abc_df,
+            delivery_df=delivery_df,
+            output_dir=_DEFAULT_OUTPUT,
+        )
+    except OSError as exc:
+        logger.error("Report write failure: {}", exc)
         return 1
 
     logger.info("=== Pipeline complete. Outputs in: {} ===", _DEFAULT_OUTPUT)
