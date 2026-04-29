@@ -359,7 +359,7 @@ wheels = [
 ]
 
 [[package]]
-name = "wvu-ieng-331-m2-2"
+name = "wvu-ieng-331-final-2"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [

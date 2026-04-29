@@ -1,5 +1,5 @@
 [project]
-name = "wvu-ieng-331-m2-2"
+name = "wvu-ieng-331-final-2"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
@@ -16,7 +16,7 @@ dependencies = [
 ]
 
 [project.scripts]
-wvu-ieng-331-m2-2 = "wvu_ieng_331_m2_2:main"
+wvu-ieng-331-final-2 = "wvu_ieng_331_final_2:main"
 
 [build-system]
 requires = ["uv_build>=0.11.2,<0.12.0"]
