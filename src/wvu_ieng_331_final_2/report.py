@@ -250,7 +250,7 @@ def _write_cover(
     ws.write("C13", f"{abc_b} products", tier_b)
     ws.write("D13", f"{abc_c} products", tier_c)
 
-    # Narrative / insights
+    # Narrative
     ws.set_row(14, 10)
     narr_title = _fmt(
         wb,
@@ -322,6 +322,29 @@ def _write_cover(
         ws.set_row(row + 1, 52)
         ws.merge_range(row + 1, 1, row + 1, 6, body, narr_body)
         row += 2
+
+    # Footer
+    footer_fmt = _fmt(
+        wb,
+        {
+            "font_size": 8,
+            "font_color": "#888888",
+            "align": "center",
+            "italic": True,
+            "top": 1,
+            "top_color": _LIGHT,
+        },
+    )
+    ws.set_row(row + 1, 18)
+    ws.merge_range(
+        row + 1,
+        1,
+        row + 1,
+        6,
+        "Data source: Olist public e-commerce dataset · Analysis period: full dataset · "
+        "Pipeline: wvu-ieng-331-final-2",
+        footer_fmt,
+    )
 
 
 def build(scorecard_df, cohort_df, abc_df, delivery_df, output_dir):
