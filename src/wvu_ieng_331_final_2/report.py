@@ -381,6 +381,71 @@ def _write_cohort(wb: xlsxwriter.Workbook, df: pl.DataFrame) -> None:
         cap_fmt,
     )
 
+    hdr_fmt = _fmt(
+        wb,
+        {
+            "bold": True,
+            "font_color": _WHITE,
+            "bg_color": _GREEN,
+            "align": "center",
+            "border": 1,
+            "border_color": _WHITE,
+            "text_wrap": True,
+            "valign": "vcenter",
+        },
+    )
+    headers = [
+        "Cohort Month",
+        "Cohort Size",
+        "Returned 30d",
+        "Rate 30d",
+        "Returned 60d",
+        "Rate 60d",
+        "Returned 90d",
+        "Rate 90d",
+    ]
+    ws.set_row(2, 28)
+    for col, hdr in enumerate(headers):
+        ws.write(2, col, hdr, hdr_fmt)
+
+    int_fmt = _fmt(
+        wb,
+        {"num_format": "#,##0", "align": "center", "border": 1, "border_color": _LIGHT},
+    )
+    pct_fmt = _fmt(
+        wb,
+        {"num_format": "0.00%", "align": "center", "border": 1, "border_color": _LIGHT},
+    )
+    date_fmt = _fmt(
+        wb,
+        {
+            "num_format": "yyyy-mm",
+            "align": "center",
+            "border": 1,
+            "border_color": _LIGHT,
+        },
+    )
+
+    sorted_df = df.sort("cohort_month")
+    for i, row_data in enumerate(sorted_df.iter_rows(named=True)):
+        r = i + 3
+        cohort_val = str(row_data["cohort_month"])[:7]  # "YYYY-MM"
+        ws.write(
+            r,
+            0,
+            cohort_val,
+            _fmt(wb, {"align": "center", "border": 1, "border_color": _LIGHT}),
+        )
+        ws.write(r, 1, int(row_data["cohort_size"]), int_fmt)
+        ws.write(r, 2, int(row_data["returned_30d"]), int_fmt)
+        ws.write(r, 3, float(row_data["retention_rate_30d"]) / 100.0, pct_fmt)
+        ws.write(r, 4, int(row_data["returned_60d"]), int_fmt)
+        ws.write(r, 5, float(row_data["retention_rate_60d"]) / 100.0, pct_fmt)
+        ws.write(r, 6, int(row_data["returned_90d"]), int_fmt)
+        ws.write(r, 7, float(row_data["retention_rate_90d"]) / 100.0, pct_fmt)
+
+    n = len(sorted_df)
+
 
 
 
