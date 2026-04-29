@@ -681,11 +681,178 @@ def _write_abc(wb: xlsxwriter.Workbook, df: pl.DataFrame) -> None:
     ws.set_row(cap_row, 40)
 
 
+# Delivery Analysis sheet
+def _write_delivery(wb: xlsxwriter.Workbook, df: pl.DataFrame) -> None:
+    ws = wb.add_worksheet("Delivery Analysis")
+    ws.set_tab_color(_ACCENT)
+    ws.hide_gridlines(2)
+    ws.freeze_panes(3, 0)
+
+    ws.set_column("A:A", 24)
+    ws.set_column("B:B", 16)
+    ws.set_column("C:D", 18)
+    ws.set_column("E:E", 20)
+    ws.set_column("F:G", 14)
+
+    title_fmt = _fmt(
+        wb,
+        {
+            "bold": True,
+            "font_size": 14,
+            "font_color": _WHITE,
+            "bg_color": _NAVY,
+            "valign": "vcenter",
+        },
+    )
+    cap_fmt = _fmt(
+        wb, {"font_size": 9, "font_color": _LIGHT, "bg_color": _NAVY, "italic": True}
+    )
+    ws.set_row(0, 30)
+    ws.merge_range("A1:G1", "Delivery Corridor Performance Analysis", title_fmt)
+    ws.set_row(1, 14)
+    ws.merge_range(
+        "A2:G2",
+        "Corridor = seller state → customer state.  Negative avg days = early delivery.",
+        cap_fmt,
+    )
+
+    hdr_fmt = _fmt(
+        wb,
+        {
+            "bold": True,
+            "font_color": _WHITE,
+            "bg_color": _NAVY,
+            "align": "center",
+            "border": 1,
+            "border_color": _WHITE,
+            "text_wrap": True,
+            "valign": "vcenter",
+        },
+    )
+    headers = [
+        "Corridor",
+        "Deliveries",
+        "Avg Actual Days",
+        "Avg Est. Days",
+        "Avg Early/Late Days",
+        "On-Time %",
+        "Late %",
+    ]
+    ws.set_row(2, 28)
+    for col, hdr in enumerate(headers):
+        ws.write(2, col, hdr, hdr_fmt)
+
+    int_fmt = _fmt(
+        wb,
+        {"num_format": "#,##0", "align": "center", "border": 1, "border_color": _LIGHT},
+    )
+    dec_fmt = _fmt(
+        wb,
+        {"num_format": "0.0", "align": "center", "border": 1, "border_color": _LIGHT},
+    )
+    pct_fmt = _fmt(
+        wb,
+        {"num_format": "0.0%", "align": "center", "border": 1, "border_color": _LIGHT},
+    )
+    txt_fmt = _fmt(wb, {"align": "center", "border": 1, "border_color": _LIGHT})
+
+    green_pct = _fmt(
+        wb,
+        {
+            "num_format": "0.0%",
+            "align": "center",
+            "bold": True,
+            "font_color": _GREEN,
+            "border": 1,
+            "border_color": _LIGHT,
+        },
+    )
+    red_pct = _fmt(
+        wb,
+        {
+            "num_format": "0.0%",
+            "align": "center",
+            "bold": True,
+            "font_color": "#C00000",
+            "border": 1,
+            "border_color": _LIGHT,
+        },
+    )
+
+    sorted_df = df.sort("on_time_rate_pct", descending=True)
+    for i, row_data in enumerate(sorted_df.iter_rows(named=True)):
+        r = i + 3
+        on_time = float(row_data["on_time_rate_pct"]) / 100.0
+        late = float(row_data["late_rate_pct"]) / 100.0
+        ot_fmt = (
+            green_pct if on_time >= 0.90 else (red_pct if on_time < 0.70 else pct_fmt)
+        )
+
+        ws.write(r, 0, str(row_data["corridor"]), txt_fmt)
+        ws.write(r, 1, int(row_data["total_deliveries"]), int_fmt)
+        ws.write(r, 2, float(row_data["avg_actual_days"]), dec_fmt)
+        ws.write(r, 3, float(row_data["avg_estimated_days"]), dec_fmt)
+        ws.write(r, 4, float(row_data["avg_days_early_late"]), dec_fmt)
+        ws.write(r, 5, on_time, ot_fmt)
+        ws.write(r, 6, late, pct_fmt)
+
+    n = len(sorted_df)
+
+    # Top 20 corridors chart
+    top20 = df.sort("on_time_rate_pct", descending=True).head(20)
+    data_row = n + 5
+    ws.write(data_row, 0, "Corridor", _fmt(wb, {"bold": True}))
+    ws.write(data_row, 1, "On-Time %", _fmt(wb, {"bold": True}))
+    for j, row_data in enumerate(top20.iter_rows(named=True)):
+        ws.write(data_row + 1 + j, 0, str(row_data["corridor"]))
+        ws.write(data_row + 1 + j, 1, float(row_data["on_time_rate_pct"]) / 100.0)
+
+    chart = wb.add_chart({"type": "bar"})
+    chart.add_series(
+        {
+            "name": "On-Time Rate",
+            "categories": ["Delivery Analysis", data_row, 0, data_row + 20, 0],
+            "values": ["Delivery Analysis", data_row, 1, data_row + 20, 1],
+            "fill": {"color": _NAVY},
+            "gap": 50,
+        }
+    )
+    chart.set_title({"name": "Top 20 Delivery Corridors by On-Time Rate"})
+    chart.set_x_axis(
+        {"name": "On-Time Delivery Rate", "num_format": "0%", "min": 0, "max": 1}
+    )
+    chart.set_y_axis({"name": "Corridor"})
+    chart.set_legend({"none": True})
+    chart.set_size({"width": 640, "height": 480})
+    ws.insert_chart(f"D{data_row + 1}", chart)
+
+    cap_row = data_row + 28
+    ws.merge_range(
+        cap_row,
+        0,
+        cap_row,
+        5,
+        "Figure 4 — Delivery corridor on-time rates",
+        _fmt(
+            wb,
+            {
+                "italic": True,
+                "font_size": 9,
+                "text_wrap": True,
+                "font_color": "#555555",
+                "valign": "top",
+            },
+        ),
+    )
+    ws.set_row(cap_row, 50)
+
+
 def build(scorecard_df, cohort_df, abc_df, delivery_df, output_dir):
     path = output_dir / "report.xlsx"
     wb = xlsxwriter.Workbook(str(path))
     _write_cover(wb, scorecard_df, cohort_df, abc_df, delivery_df)
     _write_abc(wb, abc_df)
+    _write_delivery(wb, delivery_df)
     _write_cohort(wb, cohort_df)
     wb.close()
     logger.info("Wrote Excel report: {}", path)
