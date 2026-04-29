@@ -250,6 +250,79 @@ def _write_cover(
     ws.write("C13", f"{abc_b} products", tier_b)
     ws.write("D13", f"{abc_c} products", tier_c)
 
+    # Narrative / insights
+    ws.set_row(14, 10)
+    narr_title = _fmt(
+        wb,
+        {
+            "bold": True,
+            "font_size": 12,
+            "font_color": _NAVY,
+            "bottom": 2,
+            "bottom_color": _TEAL,
+        },
+    )
+    narr_body = _fmt(
+        wb,
+        {"font_size": 10, "text_wrap": True, "valign": "top", "font_color": "#333333"},
+    )
+    bullet_fmt = _fmt(
+        wb,
+        {
+            "font_size": 10,
+            "text_wrap": True,
+            "valign": "top",
+            "font_color": _DARK,
+            "indent": 1,
+        },
+    )
+
+    ws.set_row(15, 18)
+    ws.merge_range("B16:G16", "Executive Summary & Key Findings", narr_title)
+
+    insights = [
+        (
+            "Seller Performance",
+            "The composite scorecard (30% revenue, 30% on-time, 25% review score, 15% low cancellation) "
+            "reveals wide variation across Brazil's 27 states. São Paulo (SP) dominates by volume, but "
+            "smaller states often outperform on quality metrics. See the Seller Scorecard sheet for ranked detail.",
+        ),
+        (
+            "Customer Retention",
+            "Olist's 30-day repeat-purchase rate is critically low across all cohorts."
+            "The Cohort Retention sheet shows how retention evolves over time "
+            "and highlights which cohort months had the strongest early re-engagement.",
+        ),
+        (
+            "Product Portfolio (ABC)",
+            f"Only {abc_a} products (Tier A) drive the top 80% of revenue. "
+            f"The remaining {abc_b + abc_c} products (Tiers B & C) contribute marginally. "
+            "Sellers and category managers should focus inventory and marketing on Tier A products.",
+        ),
+        (
+            "Delivery Performance",
+            "Delivery corridors vary substantially in on-time rate. Intra-state shipments generally "
+            "outperform cross-state routes. Corridors with late delivery directly correlate with lower "
+            "review scores, suggesting logistics investment would yield measurable customer experience gains.",
+        ),
+        (
+            "Recommendations",
+            "① Audit the bottom sellers for corrective action or removal. "
+            "② Launch a re-engagement campaign targeting cohorts with low retention. "
+            "③ Negotiate with carriers on the worst-performing delivery corridors. "
+            "④ Rationalize the Tier C product catalog to reduce operational overhead.",
+        ),
+    ]
+
+    row = 16
+    for title, body in insights:
+        ws.set_row(row, 14)
+        bullet_title = _fmt(wb, {"bold": True, "font_size": 10, "font_color": _TEAL})
+        ws.write(row, 1, f"▸ {title}", bullet_title)
+        ws.set_row(row + 1, 52)
+        ws.merge_range(row + 1, 1, row + 1, 6, body, narr_body)
+        row += 2
+
 
 def build(scorecard_df, cohort_df, abc_df, delivery_df, output_dir):
     path = output_dir / "report.xlsx"
