@@ -446,7 +446,54 @@ def _write_cohort(wb: xlsxwriter.Workbook, df: pl.DataFrame) -> None:
 
     n = len(sorted_df)
 
+    # Line chart: retention rates over time
+    chart = wb.add_chart({"type": "line"})
+    colors = [_GREEN, _TEAL, _ACCENT]
+    for col_idx, (label, col_offset) in enumerate(
+        [("30-Day", 3), ("60-Day", 5), ("90-Day", 7)]
+    ):
+        chart.add_series(
+            {
+                "name": label,
+                "categories": ["Cohort Retention", 3, 0, n + 2, 0],
+                "values": ["Cohort Retention", 3, col_offset, n + 2, col_offset],
+                "line": {"color": colors[col_idx], "width": 2.5},
+                "marker": {
+                    "type": "circle",
+                    "size": 5,
+                    "fill": {"color": colors[col_idx]},
+                },
+            }
+        )
+    chart.set_title({"name": "Customer Retention Rates by Cohort Month"})
+    chart.set_x_axis({"name": "Cohort Month", "text_axis": True})
+    chart.set_y_axis({"name": "Retention Rate", "num_format": "0%"})
+    chart.set_legend({"position": "bottom"})
+    chart.set_size({"width": 680, "height": 380})
+    ws.insert_chart(f"A{n + 5}", chart)
 
+    cap_row = n + 5 + 22
+    ws.merge_range(
+        cap_row,
+        0,
+        cap_row,
+        6,
+        "Figure 2 — Cohort retention rates over time. Low 30-day retention across all cohorts suggests "
+        "Olist customers rarely repurchase quickly. Cohorts from mid-2017 show marginally higher engagement, "
+        "possibly driven by promotional activity. Improving 30-day retention by 2–3 pp would meaningfully "
+        "increase lifetime revenue per customer.",
+        _fmt(
+            wb,
+            {
+                "italic": True,
+                "font_size": 9,
+                "text_wrap": True,
+                "font_color": "#555555",
+                "valign": "top",
+            },
+        ),
+    )
+    ws.set_row(cap_row, 40)
 
 
 def build(scorecard_df, cohort_df, abc_df, delivery_df, output_dir):
