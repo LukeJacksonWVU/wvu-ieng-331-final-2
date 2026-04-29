@@ -350,6 +350,9 @@ def _write_cover(
 def build(scorecard_df, cohort_df, abc_df, delivery_df, output_dir):
     path = output_dir / "report.xlsx"
     wb = xlsxwriter.Workbook(str(path))
+    _write_cover(
+        wb, scorecard_df, cohort_df, abc_df, delivery_df
+    )  # ← this line must be here
     wb.close()
     logger.info("Wrote Excel report: {}", path)
     return path
