@@ -307,10 +307,10 @@ def _write_cover(
         ),
         (
             "Recommendations",
-            "① Audit the bottom sellers for corrective action or removal. "
-            "② Launch a re-engagement campaign targeting cohorts with low retention. "
-            "③ Negotiate with carriers on the worst-performing delivery corridors. "
-            "④ Rationalize the Tier C product catalog to reduce operational overhead.",
+            "1 Audit the bottom sellers for corrective action or removal. "
+            "2 Launch a re-engagement campaign targeting cohorts with low retention. "
+            "3 Negotiate with carriers on the worst-performing delivery corridors. "
+            "4 Rationalize the Tier C product catalog to reduce operational overhead.",
         ),
     ]
 
@@ -341,10 +341,23 @@ def _write_cover(
         1,
         row + 1,
         6,
-        "Data source: Olist public e-commerce dataset · Analysis period: full dataset · "
+        "Data source: Olist public e-commerce dataset - Analysis period: full dataset - "
         "Pipeline: wvu-ieng-331-final-2",
         footer_fmt,
     )
+
+
+# Cohort Retention sheet
+def _write_cohort(wb: xlsxwriter.Workbook, df: pl.DataFrame) -> None:
+    ws = wb.add_worksheet("Cohort Retention")
+    ws.set_tab_color(_GREEN)
+    ws.hide_gridlines(2)
+    ws.freeze_panes(3, 0)
+
+    ws.set_column("A:A", 16)
+    ws.set_column("B:B", 14)
+    ws.set_column("C:E", 16)
+    ws.set_column("F:H", 18)
 
 
 def build(scorecard_df, cohort_df, abc_df, delivery_df, output_dir):
