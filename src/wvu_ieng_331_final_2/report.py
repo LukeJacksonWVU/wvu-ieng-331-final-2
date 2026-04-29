@@ -178,6 +178,78 @@ def _write_cover(
         ws.write(6, col_idx, label, kpi_label_fmt)
         ws.write(7, col_idx, value, vfmt)
 
+    # ABC summary mini-table
+    ws.set_row(9, 10)
+    ws.set_row(10, 20)
+
+    section_fmt = _fmt(
+        wb,
+        {
+            "bold": True,
+            "font_size": 11,
+            "font_color": _NAVY,
+            "bottom": 2,
+            "bottom_color": _TEAL,
+        },
+    )
+    ws.merge_range("B11:D11", "Product ABC Tier Summary", section_fmt)
+    ws.merge_range("E11:G11", f"Best Delivery Corridor: {best_corridor}", section_fmt)
+
+    tier_hdr = _fmt(
+        wb,
+        {
+            "bold": True,
+            "bg_color": _NAVY,
+            "font_color": _WHITE,
+            "align": "center",
+            "border": 1,
+            "border_color": _WHITE,
+        },
+    )
+    tier_a = _fmt(
+        wb,
+        {
+            "bg_color": _GREEN,
+            "font_color": _WHITE,
+            "align": "center",
+            "border": 1,
+            "bold": True,
+            "font_size": 12,
+        },
+    )
+    tier_b = _fmt(
+        wb,
+        {
+            "bg_color": _ACCENT,
+            "font_color": _WHITE,
+            "align": "center",
+            "border": 1,
+            "bold": True,
+            "font_size": 12,
+        },
+    )
+    tier_c = _fmt(
+        wb,
+        {
+            "bg_color": "#808080",
+            "font_color": _WHITE,
+            "align": "center",
+            "border": 1,
+            "bold": True,
+            "font_size": 12,
+        },
+    )
+
+    ws.set_row(11, 18)
+    ws.set_row(12, 30)
+    for col, hdr in zip(
+        ["B", "C", "D"], ["Tier A (Top 80%)", "Tier B (Mid 15%)", "Tier C (Bot 5%)"]
+    ):
+        ws.write(f"{col}12", hdr, tier_hdr)
+    ws.write("B13", f"{abc_a} products", tier_a)
+    ws.write("C13", f"{abc_b} products", tier_b)
+    ws.write("D13", f"{abc_c} products", tier_c)
+
 
 def build(scorecard_df, cohort_df, abc_df, delivery_df, output_dir):
     path = output_dir / "report.xlsx"
