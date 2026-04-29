@@ -478,10 +478,7 @@ def _write_cohort(wb: xlsxwriter.Workbook, df: pl.DataFrame) -> None:
         0,
         cap_row,
         6,
-        "Figure 2 — Cohort retention rates over time. Low 30-day retention across all cohorts suggests "
-        "Olist customers rarely repurchase quickly. Cohorts from mid-2017 show marginally higher engagement, "
-        "possibly driven by promotional activity. Improving 30-day retention by 2–3 pp would meaningfully "
-        "increase lifetime revenue per customer.",
+        "Figure 2 — Cohort retention rates over time.",
         _fmt(
             wb,
             {
@@ -496,10 +493,26 @@ def _write_cohort(wb: xlsxwriter.Workbook, df: pl.DataFrame) -> None:
     ws.set_row(cap_row, 40)
 
 
+# ABC Analysis sheet
+def _write_abc(wb: xlsxwriter.Workbook, df: pl.DataFrame) -> None:
+    ws = wb.add_worksheet("ABC Analysis")
+    ws.set_tab_color(_ACCENT)
+    ws.hide_gridlines(2)
+    ws.freeze_panes(3, 0)
+
+    ws.set_column("A:A", 36)
+    ws.set_column("B:B", 26)
+    ws.set_column("C:C", 18)
+    ws.set_column("D:D", 14)
+    ws.set_column("E:E", 16)
+    ws.set_column("F:F", 10)
+
+
 def build(scorecard_df, cohort_df, abc_df, delivery_df, output_dir):
     path = output_dir / "report.xlsx"
     wb = xlsxwriter.Workbook(str(path))
     _write_cover(wb, scorecard_df, cohort_df, abc_df, delivery_df)
+    _write_cohort(wb, cohort_df)
     wb.close()
     logger.info("Wrote Excel report: {}", path)
     return path
