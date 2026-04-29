@@ -172,6 +172,12 @@ def _write_cover(
     ws.set_row(6, 22)
     ws.set_row(7, 44)
 
+    # Write each KPI in its own column (B=1 through G=6, 0-indexed)
+    for i, (label, value, vfmt) in enumerate(kpis):
+        col_idx = 1 + i  # B=1, C=2, D=3, E=4, F=5, G=6
+        ws.write(6, col_idx, label, kpi_label_fmt)
+        ws.write(7, col_idx, value, vfmt)
+
 
 def build(scorecard_df, cohort_df, abc_df, delivery_df, output_dir):
     path = output_dir / "report.xlsx"
