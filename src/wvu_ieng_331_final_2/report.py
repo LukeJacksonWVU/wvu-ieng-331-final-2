@@ -359,6 +359,30 @@ def _write_cohort(wb: xlsxwriter.Workbook, df: pl.DataFrame) -> None:
     ws.set_column("C:E", 16)
     ws.set_column("F:H", 18)
 
+    title_fmt = _fmt(
+        wb,
+        {
+            "bold": True,
+            "font_size": 14,
+            "font_color": _WHITE,
+            "bg_color": _NAVY,
+            "valign": "vcenter",
+        },
+    )
+    cap_fmt = _fmt(
+        wb, {"font_size": 9, "font_color": _LIGHT, "bg_color": _NAVY, "italic": True}
+    )
+    ws.set_row(0, 30)
+    ws.merge_range("A1:H1", "Monthly Cohort Retention Analysis", title_fmt)
+    ws.set_row(1, 14)
+    ws.merge_range(
+        "A2:H2",
+        "Tracks the % of first-time buyers who place a second order within 30, 60, or 90 days",
+        cap_fmt,
+    )
+
+
+
 
 def build(scorecard_df, cohort_df, abc_df, delivery_df, output_dir):
     path = output_dir / "report.xlsx"
