@@ -27,6 +27,21 @@ def _fmt(wb: xlsxwriter.Workbook, props: dict) -> xlsxwriter.workbook.Format:
     return wb.add_format(base)
 
 
+def _write_cover(
+    wb: xlsxwriter.Workbook,
+    scorecard_df: pl.DataFrame,
+    cohort_df: pl.DataFrame,
+    abc_df: pl.DataFrame,
+    delivery_df: pl.DataFrame,
+) -> None:
+    ws = wb.add_worksheet("Cover")
+    ws.set_tab_color(_TEAL)
+    ws.hide_gridlines(2)
+    ws.set_column("A:A", 3)
+    ws.set_column("B:B", 28)
+    ws.set_column("C:H", 18)
+
+
 def build(scorecard_df, cohort_df, abc_df, delivery_df, output_dir):
     path = output_dir / "report.xlsx"
     wb = xlsxwriter.Workbook(str(path))
