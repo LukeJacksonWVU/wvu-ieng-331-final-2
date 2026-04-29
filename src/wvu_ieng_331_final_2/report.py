@@ -506,12 +506,186 @@ def _write_abc(wb: xlsxwriter.Workbook, df: pl.DataFrame) -> None:
     ws.set_column("D:D", 14)
     ws.set_column("E:E", 16)
     ws.set_column("F:F", 10)
+    title_fmt = _fmt(
+        wb,
+        {
+            "bold": True,
+            "font_size": 14,
+            "font_color": _WHITE,
+            "bg_color": _NAVY,
+            "valign": "vcenter",
+        },
+    )
+    cap_fmt = _fmt(
+        wb, {"font_size": 9, "font_color": _LIGHT, "bg_color": _NAVY, "italic": True}
+    )
+    ws.set_row(0, 30)
+    ws.merge_range(
+        "A1:F1", "Product ABC Revenue Classification (Pareto Analysis)", title_fmt
+    )
+    ws.set_row(1, 14)
+    ws.merge_range(
+        "A2:F2",
+        "Tier A = top 80% of revenue  |  Tier B = next 15%  |  Tier C = bottom 5%",
+        cap_fmt,
+    )
+
+    hdr_fmt = _fmt(
+        wb,
+        {
+            "bold": True,
+            "font_color": _WHITE,
+            "bg_color": _ACCENT,
+            "align": "center",
+            "border": 1,
+            "border_color": _WHITE,
+            "text_wrap": True,
+            "valign": "vcenter",
+        },
+    )
+    headers = [
+        "Product ID",
+        "Category",
+        "Revenue (BRL)",
+        "Revenue %",
+        "Cumulative %",
+        "Tier",
+    ]
+    ws.set_row(2, 28)
+    for col, hdr in enumerate(headers):
+        ws.write(2, col, hdr, hdr_fmt)
+
+    tier_a_fmt = _fmt(
+        wb,
+        {
+            "bold": True,
+            "font_color": _WHITE,
+            "bg_color": _GREEN,
+            "align": "center",
+            "border": 1,
+            "border_color": _WHITE,
+        },
+    )
+    tier_b_fmt = _fmt(
+        wb,
+        {
+            "bold": True,
+            "font_color": _WHITE,
+            "bg_color": _ACCENT,
+            "align": "center",
+            "border": 1,
+            "border_color": _WHITE,
+        },
+    )
+    tier_c_fmt = _fmt(
+        wb,
+        {
+            "bold": True,
+            "font_color": _WHITE,
+            "bg_color": "#808080",
+            "align": "center",
+            "border": 1,
+            "border_color": _WHITE,
+        },
+    )
+    cur_fmt = _fmt(wb, {"num_format": "R#,##0.00", "border": 1, "border_color": _LIGHT})
+    pct_fmt = _fmt(
+        wb,
+        {"num_format": "0.00%", "align": "center", "border": 1, "border_color": _LIGHT},
+    )
+    txt_fmt = _fmt(wb, {"border": 1, "border_color": _LIGHT})
+    ctxt_fmt = _fmt(wb, {"align": "center", "border": 1, "border_color": _LIGHT})
+
+    sorted_df = df.sort("total_revenue", descending=True)
+    for i, row_data in enumerate(sorted_df.iter_rows(named=True)):
+        r = i + 3
+        tier = str(row_data["abc_tier"])
+        tier_fmt = (
+            tier_a_fmt if tier == "A" else (tier_b_fmt if tier == "B" else tier_c_fmt)
+        )
+
+        ws.write(r, 0, str(row_data["product_id"]), txt_fmt)
+        cat = str(row_data.get("category", "")) if row_data.get("category") else "—"
+        ws.write(r, 1, cat, txt_fmt)
+        ws.write(r, 2, float(row_data["total_revenue"]), cur_fmt)
+        ws.write(r, 3, float(row_data["revenue_pct"]) / 100.0, pct_fmt)
+        ws.write(r, 4, float(row_data["cumulative_pct"]) / 100.0, pct_fmt)
+        ws.write(r, 5, tier, tier_fmt)
+
+    n = len(sorted_df)
+
+    # Bar chart: revenue by tier
+    tier_summary = (
+        df.group_by("abc_tier")
+        .agg(pl.col("total_revenue").sum().alias("revenue"), pl.len().alias("products"))
+        .sort("abc_tier")
+    )
+
+    data_row_start = n + 5
+    ws.write(data_row_start, 0, "Tier", _fmt(wb, {"bold": True}))
+    ws.write(data_row_start, 1, "Revenue", _fmt(wb, {"bold": True}))
+    ws.write(data_row_start, 2, "Products", _fmt(wb, {"bold": True}))
+    for j, row_data in enumerate(tier_summary.iter_rows(named=True)):
+        ws.write(data_row_start + 1 + j, 0, row_data["abc_tier"])
+        ws.write(data_row_start + 1 + j, 1, float(row_data["revenue"]))
+        ws.write(data_row_start + 1 + j, 2, int(row_data["products"]))
+
+    n_tiers = len(tier_summary)
+    chart = wb.add_chart({"type": "column"})
+    chart.add_series(
+        {
+            "name": "Total Revenue by Tier",
+            "categories": [
+                "ABC Analysis",
+                data_row_start + 1,
+                0,
+                data_row_start + n_tiers,
+                0,
+            ],
+            "values": [
+                "ABC Analysis",
+                data_row_start + 1,
+                1,
+                data_row_start + n_tiers,
+                1,
+            ],
+            "fill": {"color": _ACCENT},
+            "gap": 80,
+        }
+    )
+    chart.set_title({"name": "Total Revenue by ABC Product Tier"})
+    chart.set_x_axis({"name": "Product Tier"})
+    chart.set_y_axis({"name": "Revenue (BRL)", "num_format": "R#,##0"})
+    chart.set_legend({"none": True})
+    chart.set_size({"width": 520, "height": 340})
+    ws.insert_chart(f"D{data_row_start + 1}", chart)
+
+    cap_row = data_row_start + 22
+    ws.merge_range(
+        cap_row,
+        0,
+        cap_row,
+        4,
+        "Figure 3 — Pareto analysis",
+        _fmt(
+            wb,
+            {
+                "italic": True,
+                "font_size": 9,
+                "text_wrap": True,
+                "font_color": "#555555",
+                "valign": "top",
+            },
+        ),
+    )
+    ws.set_row(cap_row, 40)
 
 
 def build(scorecard_df, cohort_df, abc_df, delivery_df, output_dir):
     path = output_dir / "report.xlsx"
     wb = xlsxwriter.Workbook(str(path))
     _write_cover(wb, scorecard_df, cohort_df, abc_df, delivery_df)
+    _write_abc(wb, abc_df)
     _write_cohort(wb, cohort_df)
     wb.close()
     logger.info("Wrote Excel report: {}", path)
