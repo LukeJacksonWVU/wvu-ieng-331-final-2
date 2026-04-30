@@ -4,18 +4,19 @@
 --   $3 :: DATE     -- end_date filter     (NULL = no upper bound)
 
 WITH order_seller AS (
-    -- One row per (order, seller) to resolve the seller_state for each order.
-    -- Use the first seller alphabetically when an order spans multiple sellers.
-    SELECT DISTINCT ON (oi.order_id)
-        oi.order_id,
-        s.seller_state
-    FROM order_items oi
-    JOIN sellers s ON oi.seller_id = s.seller_id
-    WHERE ($1 IS NULL OR s.seller_state = $1)
-    ORDER BY oi.order_id, s.seller_state
+    SELECT order_id, seller_state
+        FROM (
+            SELECT
+                oi.order_id,
+                s.seller_state,
+                ROW_NUMBER() OVER (PARTITION BY oi.order_id ORDER BY s.seller_state) AS rn
+            FROM order_items oi
+            JOIN sellers s ON oi.seller_id = s.seller_id
+            WHERE ($1 IS NULL OR s.seller_state = $1)
+        )
+        WHERE rn = 1
 ),
 delivery_times AS (
-    -- One row per delivered order (no fan-out from multi-item orders)
     SELECT
         o.order_id,
         c.customer_state,
@@ -24,8 +25,8 @@ delivery_times AS (
         datediff('day', o.order_purchase_timestamp, o.order_estimated_delivery_date)      AS estimated_days,
         datediff('day', o.order_delivered_customer_date, o.order_estimated_delivery_date) AS days_early_late
     FROM orders o
-    JOIN customers  c  ON o.customer_id = c.customer_id
-    JOIN order_seller os ON o.order_id  = os.order_id
+    JOIN customers    c  ON o.customer_id = c.customer_id
+    JOIN order_seller os ON o.order_id    = os.order_id
     WHERE o.order_status = 'delivered'
       AND o.order_delivered_customer_date IS NOT NULL
       AND o.order_estimated_delivery_date IS NOT NULL
