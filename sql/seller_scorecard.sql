@@ -15,14 +15,15 @@ WITH seller_revenue AS (
       AND ($3 IS NULL OR CAST(o.order_purchase_timestamp AS DATE) <= $3)
     GROUP BY oi.seller_id
 ),
+
 seller_delivery AS (
     SELECT
         oi.seller_id,
         ROUND(
-            SUM(CASE
+            COUNT(DISTINCT CASE
                 WHEN CAST(o.order_delivered_customer_date AS DATE)
                      <= CAST(o.order_estimated_delivery_date AS DATE)
-                THEN 1 ELSE 0
+                THEN o.order_id ELSE NULL
             END) * 100.0 / COUNT(DISTINCT o.order_id),
         2) AS on_time_rate_pct
     FROM order_items oi
@@ -34,6 +35,7 @@ seller_delivery AS (
       AND ($3 IS NULL OR CAST(o.order_purchase_timestamp AS DATE) <= $3)
     GROUP BY oi.seller_id
 ),
+
 seller_reviews AS (
     SELECT
         oi_dedup.seller_id,
