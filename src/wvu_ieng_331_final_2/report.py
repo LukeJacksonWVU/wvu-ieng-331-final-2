@@ -347,6 +347,248 @@ def _write_cover(
     )
 
 
+# Seller Scorecard sheet
+def _write_scorecard(wb: xlsxwriter.Workbook, df: pl.DataFrame) -> None:
+    ws = wb.add_worksheet("Seller Scorecard")
+    ws.set_tab_color(_TEAL)
+    ws.hide_gridlines(2)
+    ws.freeze_panes(3, 0)
+
+    ws.set_column("A:A", 8)  # rank
+    ws.set_column("B:B", 36)  # seller_id
+    ws.set_column("C:C", 16)  # state
+    ws.set_column("D:D", 14)  # orders
+    ws.set_column("E:E", 18)  # revenue
+    ws.set_column("F:F", 16)  # on_time
+    ws.set_column("G:G", 16)  # review
+    ws.set_column("H:H", 18)  # cancellation
+    ws.set_column("I:I", 18)  # composite
+
+    # Title row
+    title_fmt = _fmt(
+        wb,
+        {
+            "bold": True,
+            "font_size": 14,
+            "font_color": _WHITE,
+            "bg_color": _NAVY,
+            "valign": "vcenter",
+        },
+    )
+    cap_fmt = _fmt(
+        wb, {"font_size": 9, "font_color": _LIGHT, "bg_color": _NAVY, "italic": True}
+    )
+    ws.set_row(0, 30)
+    ws.merge_range("A1:I1", "Seller Performance Scorecard", title_fmt)
+    ws.set_row(1, 14)
+    ws.merge_range(
+        "A2:I2",
+        "Composite score = 30% revenue + 30% on-time delivery + 25% review score + 15% low cancellation rate",
+        cap_fmt,
+    )
+
+    # Header row
+    hdr_fmt = _fmt(
+        wb,
+        {
+            "bold": True,
+            "font_color": _WHITE,
+            "bg_color": _TEAL,
+            "align": "center",
+            "border": 1,
+            "border_color": _WHITE,
+            "text_wrap": True,
+            "valign": "vcenter",
+        },
+    )
+    headers = [
+        "Rank",
+        "Seller ID",
+        "State",
+        "Total Orders",
+        "Revenue (BRL)",
+        "On-Time %",
+        "Avg Review",
+        "Cancel %",
+        "Composite Score",
+    ]
+    ws.set_row(2, 28)
+    for col, hdr in enumerate(headers):
+        ws.write(2, col, hdr, hdr_fmt)
+
+    # Data formats
+    int_fmt = _fmt(
+        wb,
+        {"num_format": "#,##0", "align": "center", "border": 1, "border_color": _LIGHT},
+    )
+    cur_fmt = _fmt(wb, {"num_format": "R#,##0.00", "border": 1, "border_color": _LIGHT})
+    pct_fmt = _fmt(
+        wb,
+        {"num_format": "0.0%", "align": "center", "border": 1, "border_color": _LIGHT},
+    )
+    dec_fmt = _fmt(
+        wb,
+        {"num_format": "0.00", "align": "center", "border": 1, "border_color": _LIGHT},
+    )
+    txt_fmt = _fmt(wb, {"align": "center", "border": 1, "border_color": _LIGHT})
+    rank_fmt = _fmt(
+        wb, {"bold": True, "align": "center", "border": 1, "border_color": _LIGHT}
+    )
+    alt_bg = _fmt(
+        wb,
+        {
+            "bg_color": _GREY,
+            "num_format": "#,##0",
+            "align": "center",
+            "border": 1,
+            "border_color": _LIGHT,
+        },
+    )
+
+    # Score color bands
+    green_fmt = _fmt(
+        wb,
+        {
+            "num_format": "0.0000",
+            "align": "center",
+            "bold": True,
+            "font_color": _GREEN,
+            "border": 1,
+            "border_color": _LIGHT,
+        },
+    )
+    orange_fmt = _fmt(
+        wb,
+        {
+            "num_format": "0.0000",
+            "align": "center",
+            "bold": True,
+            "font_color": _ACCENT,
+            "border": 1,
+            "border_color": _LIGHT,
+        },
+    )
+    red_fmt = _fmt(
+        wb,
+        {
+            "num_format": "0.0000",
+            "align": "center",
+            "bold": True,
+            "font_color": "#C00000",
+            "border": 1,
+            "border_color": _LIGHT,
+        },
+    )
+
+    # Sort: top sellers first
+    sorted_df = df.sort("seller_rank", descending=False)
+
+    for i, row_data in enumerate(sorted_df.iter_rows(named=True)):
+        r = i + 3
+        even = i % 2 == 1
+        row_bg = _fmt(
+            wb,
+            {
+                "bg_color": _GREY if even else _WHITE,
+                "border": 1,
+                "border_color": _LIGHT,
+            },
+        )
+
+        score = float(row_data["composite_score"])
+        if score >= 0.6:
+            score_fmt = green_fmt
+        elif score >= 0.3:
+            score_fmt = orange_fmt
+        else:
+            score_fmt = red_fmt
+
+        ws.write(r, 0, row_data["seller_rank"], rank_fmt)
+        ws.write(r, 1, row_data["seller_id"], txt_fmt)
+        ws.write(r, 2, row_data["seller_state"], txt_fmt)
+        ws.write(r, 3, row_data["total_orders"], int_fmt)
+        ws.write(r, 4, float(row_data["total_revenue"]), cur_fmt)
+        ws.write(r, 5, float(row_data["on_time_rate_pct"]) / 100.0, pct_fmt)
+        ws.write(r, 6, float(row_data["avg_review_score"]), dec_fmt)
+        ws.write(r, 7, float(row_data["cancellation_rate_pct"]) / 100.0, pct_fmt)
+        ws.write(r, 8, score, score_fmt)
+
+    # Caption below data
+    last_data_row = len(sorted_df) + 3
+    cap2 = _fmt(wb, {"italic": True, "font_size": 9, "font_color": "#666666"})
+    ws.write(
+        last_data_row + 1,
+        0,
+        "Color: Green ≥ 0.6 (top), Orange 0.3–0.6 (mid), Red < 0.3 (needs attention)",
+        cap2,
+    )
+
+    # Chart: Avg composite score by state
+    state_agg = (
+        df.group_by("seller_state")
+        .agg(
+            pl.col("composite_score").mean().round(4).alias("avg_score"),
+            pl.col("total_revenue").sum().alias("revenue"),
+            pl.len().alias("n"),
+        )
+        .sort("avg_score", descending=True)
+        .head(15)
+    )
+
+    chart_ws = wb.add_worksheet("Chart – Seller Score by State")
+    chart_ws.set_tab_color(_LIGHT)
+    chart_ws.hide_gridlines(2)
+
+    chart_ws.write(0, 0, "State", _fmt(wb, {"bold": True}))
+    chart_ws.write(0, 1, "Avg Score", _fmt(wb, {"bold": True}))
+    chart_ws.write(0, 2, "Revenue", _fmt(wb, {"bold": True}))
+
+    for i, row_data in enumerate(state_agg.iter_rows(named=True)):
+        chart_ws.write(i + 1, 0, row_data["seller_state"])
+        chart_ws.write(i + 1, 1, float(row_data["avg_score"]))
+        chart_ws.write(i + 1, 2, float(row_data["revenue"]))
+
+    n_states = len(state_agg)
+    chart = wb.add_chart({"type": "bar"})
+    chart.add_series(
+        {
+            "name": "Avg Composite Score",
+            "categories": ["Chart – Seller Score by State", 1, 0, n_states, 0],
+            "values": ["Chart – Seller Score by State", 1, 1, n_states, 1],
+            "fill": {"color": _TEAL},
+            "gap": 60,
+        }
+    )
+    chart.set_title({"name": "Average Seller Composite Score by State (Top 15)"})
+    chart.set_x_axis({"name": "Avg Composite Score", "min": 0, "max": 1})
+    chart.set_y_axis({"name": "State"})
+    chart.set_legend({"none": True})
+    chart.set_size({"width": 640, "height": 420})
+    chart.set_chartarea({"border": {"color": _LIGHT}})
+    chart.set_plotarea({"border": {"color": _LIGHT}})
+    chart_ws.insert_chart("E2", chart)
+
+    cap_chart = _fmt(wb, {"italic": True, "font_size": 9, "font_color": "#555555"})
+    chart_ws.merge_range(
+        n_states + 3,
+        0,
+        n_states + 3,
+        4,
+        "Figure 1 — States with highest average composite scores tend to have fewer but higher-quality sellers. "
+        "SP leads in revenue but not always in score quality, suggesting volume-vs-quality trade-offs.",
+        _fmt(
+            wb,
+            {
+                "italic": True,
+                "font_size": 9,
+                "text_wrap": True,
+                "font_color": "#555555",
+            },
+        ),
+    )
+    chart_ws.set_row(n_states + 3, 30)
+
+
 # Cohort Retention sheet
 def _write_cohort(wb: xlsxwriter.Workbook, df: pl.DataFrame) -> None:
     ws = wb.add_worksheet("Cohort Retention")
@@ -847,13 +1089,45 @@ def _write_delivery(wb: xlsxwriter.Workbook, df: pl.DataFrame) -> None:
     ws.set_row(cap_row, 50)
 
 
-def build(scorecard_df, cohort_df, abc_df, delivery_df, output_dir):
+# Public entry point
+def build(
+    scorecard_df: pl.DataFrame,
+    cohort_df: pl.DataFrame,
+    abc_df: pl.DataFrame,
+    delivery_df: pl.DataFrame,
+    output_dir: Path,
+) -> Path:
+    """Build the Excel report and write it to output_dir/report.xlsx.
+
+    Args:
+        scorecard_df: Seller scorecard DataFrame from queries.get_seller_scorecard.
+        cohort_df: Cohort retention DataFrame from queries.get_cohort_retention.
+        abc_df: ABC classification DataFrame from queries.get_abc_classification.
+        delivery_df: Delivery time DataFrame from queries.get_delivery_time_analysis.
+        output_dir: Directory to write the report into.
+
+    Returns:
+        Path to the written report.xlsx file.
+
+    Raises:
+        OSError: If the file cannot be written.
+    """
     path = output_dir / "report.xlsx"
-    wb = xlsxwriter.Workbook(str(path))
-    _write_cover(wb, scorecard_df, cohort_df, abc_df, delivery_df)
-    _write_abc(wb, abc_df)
-    _write_delivery(wb, delivery_df)
-    _write_cohort(wb, cohort_df)
-    wb.close()
-    logger.info("Wrote Excel report: {}", path)
+    try:
+        wb = xlsxwriter.Workbook(
+            str(path),
+            {"strings_to_numbers": False, "default_date_format": "yyyy-mm-dd"},
+        )
+        _write_cover(wb, scorecard_df, cohort_df, abc_df, delivery_df)
+        _write_scorecard(wb, scorecard_df)
+        _write_cohort(wb, cohort_df)
+        _write_abc(wb, abc_df)
+        _write_delivery(wb, delivery_df)
+        wb.close()
+        logger.info(
+            "Wrote Excel report: {} ({:.1f} KB)", path, path.stat().st_size / 1024
+        )
+    except OSError as exc:
+        logger.error("Failed to write report.xlsx: {}", exc)
+        raise
     return path
